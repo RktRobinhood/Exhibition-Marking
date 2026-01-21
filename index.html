@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TOK Exhibition Marking Tool - Final</title>
+    <title>TOK Exhibition Marking Tool</title>
 <style>
 /* CSS Styling - Final Version */
 :root {
@@ -467,6 +467,15 @@ button:active { transform: translateY(1px); }
                         <li>Select "Predicted Grade Band".</li>
                     </ul>
                 </li>
+                <li><strong>Automated Grade:</strong> Reference only. Hover for calculation (total score / max possible, band thresholds).</li>
+                <li><strong>Generate File for ChatGPT:</strong> Downloads a .txt file with data and embedded instructions for ChatGPT.</li>
+                 <li><strong>Using ChatGPT Output File:</strong>
+                    <ul>
+                        <li>Upload .txt to ChatGPT (if supported) or copy-paste all text.</li>
+                        <li>Use prompt: "Process the uploaded/pasted text. It contains TOK feedback and embedded instructions. Follow all 'MANDATORY PROCESSING INSTRUCTIONS' and output the complete, formatted feedback document."</li>
+                        <li>ChatGPT should provide well-formatted Markdown output.</li>
+                    </ul>
+                </li>
                 <li><strong>Export Comments Only:</strong> Downloads a .txt of student info, IA prompt, and all written comments.</li>
                 <li><strong>Local Storage:</strong> Work auto-saves. Restore prompt appears on reload if data exists.</li>
                 <li><strong>Reset Form:</strong> Clears all fields, local storage, and scrolls to top.</li>
@@ -474,6 +483,7 @@ button:active { transform: translateY(1px); }
 
             <h4>Philosophy:</h4>
             <p>Encourages detailed, criterion-referenced feedback. AI-generated "Concrete Steps" provide actionable guidance. Aims to make feedback structured and accessible for student improvement.</p>
+            <p><em>Last Updated: October 26, 2023</em></p>
         </div>
     </div>
 
@@ -531,7 +541,7 @@ document.addEventListener('DOMContentLoaded', () => {
              currentSectionId = document.querySelectorAll('.input-section')[0].id;
         }
         sideNavLinks.forEach(link => {
-            link.classList.toggle('active', link.getAttribute('href') === #${currentSectionId});
+            link.classList.toggle('active', link.getAttribute('href') === `#${currentSectionId}`);
         });
     }
     window.addEventListener('scroll', updateActiveNavLink, { passive: true });
@@ -557,7 +567,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function populateIAPrompts() {
         iaPrompts.forEach((prompt, index) => {
             const option = document.createElement('option');
-            option.value = ${index + 1}. ${prompt}; option.textContent = ${index + 1}. ${prompt};
+            option.value = `${index + 1}. ${prompt}`; option.textContent = `${index + 1}. ${prompt}`;
             iaPromptSelect.appendChild(option);
         });
     }
@@ -575,7 +585,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const div = document.createElement('div'); const label = document.createElement('label');
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox'; checkbox.name = 'characteristic'; checkbox.value = char.value; checkbox.dataset.score = char.score;
-            label.appendChild(checkbox); label.appendChild(document.createTextNode( ${char.text}));
+            label.appendChild(checkbox); label.appendChild(document.createTextNode(` ${char.text}`));
             div.appendChild(label); characteristicsChecklistDiv.appendChild(div);
         });
     }
@@ -597,30 +607,30 @@ document.addEventListener('DOMContentLoaded', () => {
     function calculateAutomatedGrade() {
         let totalScore = 0; let reasoning = "Automated Grade Reasoning:\n"; let itemsSelected = 0;
         objectSections.forEach(obj => {
-            let objectScore = 0; reasoning += \nObject ${obj.id} Commentary:\n;
+            let objectScore = 0; reasoning += `\nObject ${obj.id} Commentary:\n`;
             objectRubricKeys.forEach(key => {
-                const checkedRadio = document.querySelector(input[name="${obj.criteriaPrefix}-${key}"]:checked);
-                if (checkedRadio) { const score = parseInt(checkedRadio.dataset.score); objectScore += score; itemsSelected++; reasoning += - ${key.charAt(0).toUpperCase() + key.slice(1)}: ${checkedRadio.value} (${score} pts)\n;
-                } else { reasoning += - ${key.charAt(0).toUpperCase() + key.slice(1)}: Not selected\n; }
+                const checkedRadio = document.querySelector(`input[name="${obj.criteriaPrefix}-${key}"]:checked`);
+                if (checkedRadio) { const score = parseInt(checkedRadio.dataset.score); objectScore += score; itemsSelected++; reasoning += `- ${key.charAt(0).toUpperCase() + key.slice(1)}: ${checkedRadio.value} (${score} pts)\n`;
+                } else { reasoning += `- ${key.charAt(0).toUpperCase() + key.slice(1)}: Not selected\n`; }
             });
-            totalScore += objectScore; reasoning += Subtotal for Object ${obj.id} Commentary: ${objectScore} pts\n;
+            totalScore += objectScore; reasoning += `Subtotal for Object ${obj.id} Commentary: ${objectScore} pts\n`;
         });
         reasoning += "\nOverall Exhibition:\n";
         const summativeEvidenceRadio = document.querySelector('input[name="summative-evidence"]:checked');
         if (summativeEvidenceRadio) {
             const score = parseInt(summativeEvidenceRadio.dataset.score); totalScore += score; itemsSelected++;
-            reasoning += - Overall Support & Evidence: ${summativeEvidenceRadio.value} (${score} pts)\n;
+            reasoning += `- Overall Support & Evidence: ${summativeEvidenceRadio.value} (${score} pts)\n`;
         } else { reasoning += "- Overall Support & Evidence: Not selected\n"; }
         let characteristicsScore = 0; reasoning += "Overall Characteristics:\n";
         const checkedCharacteristics = document.querySelectorAll('#possible-characteristics-checklist input[type="checkbox"]:checked');
         if (checkedCharacteristics.length > 0) {
-            checkedCharacteristics.forEach(charCheckbox => { const score = parseInt(charCheckbox.dataset.score); characteristicsScore += score; itemsSelected++; reasoning += - ${charCheckbox.value} (${score} pts)\n; });
+            checkedCharacteristics.forEach(charCheckbox => { const score = parseInt(charCheckbox.dataset.score); characteristicsScore += score; itemsSelected++; reasoning += `- ${charCheckbox.value} (${score} pts)\n`; });
         } else { reasoning += "- No characteristics selected\n"; }
         totalScore += characteristicsScore;
-        reasoning += Subtotal for Characteristics: ${characteristicsScore} pts\n;
-        reasoning += \nTotal Calculated Score: ${totalScore} / ${maxScore} (Max Possible)\n;
+        reasoning += `Subtotal for Characteristics: ${characteristicsScore} pts\n`;
+        reasoning += `\nTotal Calculated Score: ${totalScore} / ${maxScore} (Max Possible)\n`;
         reasoning += "\nGrade Band Thresholds (Min Score for Band):\n";
-        gradeBands.slice(0, -1).forEach(gb => { reasoning += - ${gb.band}: ${gb.minScore} pts\n; });
+        gradeBands.slice(0, -1).forEach(gb => { reasoning += `- ${gb.band}: ${gb.minScore} pts\n`; });
 
         if (itemsSelected === 0) return { band: "N/A", reasoning: "Select rubric items to see an estimate." };
         for (const grade of gradeBands) { if (totalScore >= grade.minScore) return { band: grade.band, reasoning: reasoning }; }
@@ -645,10 +655,10 @@ document.addEventListener('DOMContentLoaded', () => {
         objectSections.forEach(obj => {
             const objectData = { id: obj.id, name: obj.nameInput.value, comments: obj.commentsInput.value, rubric: {}, evalFlag: null };
             objectRubricKeys.forEach(key => {
-                const checkedRadio = document.querySelector(input[name="${obj.criteriaPrefix}-${key}"]:checked);
+                const checkedRadio = document.querySelector(`input[name="${obj.criteriaPrefix}-${key}"]:checked`);
                 objectData.rubric[key] = checkedRadio ? checkedRadio.value : null;
             });
-            const checkedEvalFlag = document.querySelector(input[name="${obj.evalFlagName}"]:checked);
+            const checkedEvalFlag = document.querySelector(`input[name="${obj.evalFlagName}"]:checked`);
             if (checkedEvalFlag) objectData.evalFlag = checkedEvalFlag.value;
             formData.objects.push(objectData);
         });
@@ -666,7 +676,7 @@ document.addEventListener('DOMContentLoaded', () => {
             summativeCommentsInput.value = formData.summativeComments || "";
             predictedGradeBandSelect.value = formData.predictedGrade || "";
             if (formData.summativeEvidence) {
-                const radioToSelect = document.querySelector(input[name="summative-evidence"][value="${formData.summativeEvidence}"]);
+                const radioToSelect = document.querySelector(`input[name="summative-evidence"][value="${formData.summativeEvidence}"]`);
                 if (radioToSelect) radioToSelect.checked = true;
             }
             formData.objects.forEach(savedObj => {
@@ -676,12 +686,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     targetObj.commentsInput.value = savedObj.comments || "";
                     objectRubricKeys.forEach(key => {
                         if (savedObj.rubric[key]) {
-                            const radioToSelect = document.querySelector(input[name="${targetObj.criteriaPrefix}-${key}"][value="${savedObj.rubric[key]}"]);
+                            const radioToSelect = document.querySelector(`input[name="${targetObj.criteriaPrefix}-${key}"][value="${savedObj.rubric[key]}"]`);
                             if (radioToSelect) radioToSelect.checked = true;
                         }
                     });
                     if (savedObj.evalFlag) { // Only check if a specific flag was saved
-                        const flagRadio = document.querySelector(input[name="${targetObj.evalFlagName}"][value="${savedObj.evalFlag}"]);
+                        const flagRadio = document.querySelector(`input[name="${targetObj.evalFlagName}"][value="${savedObj.evalFlag}"]`);
                         if (flagRadio) flagRadio.checked = true;
                     } // No default needed here as HTML now doesn't have one, or you can add one if no savedObj.evalFlag
                 }
@@ -735,8 +745,8 @@ document.addEventListener('DOMContentLoaded', () => {
             summativeEvidenceRadios.forEach(r => r.checked = false);
             objectSections.forEach(obj => {
                 obj.nameInput.value = ""; obj.commentsInput.value = "";
-                objectRubricKeys.forEach(key => { document.querySelectorAll(input[name="${obj.criteriaPrefix}-${key}"]).forEach(r => r.checked = false); });
-                document.querySelectorAll(input[name="${obj.evalFlagName}"]).forEach(r => r.checked = false);
+                objectRubricKeys.forEach(key => { document.querySelectorAll(`input[name="${obj.criteriaPrefix}-${key}"]`).forEach(r => r.checked = false); });
+                document.querySelectorAll(`input[name="${obj.evalFlagName}"]`).forEach(r => r.checked = false);
                  // No explicit default checked for object eval, user needs to select
             });
             document.querySelectorAll('#possible-characteristics-checklist input[type="checkbox"]').forEach(cb => cb.checked = false);
@@ -755,53 +765,58 @@ document.addEventListener('DOMContentLoaded', () => {
         // Include automated estimate for convenience (still teacher-facing; not a replacement for manual band)
         const auto = calculateAutomatedGrade();
 
-        let output = TOK Exhibition Marking - Detailed Export (No Prompt)\n;
-        output += Student Name: ${studentName}\n;
-        output += IA Prompt Selected: ${iaPrompt}\n;
-        output += Teacher's Predicted Grade Band (Manual): ${predictedGradeBandSelect.value || "Not Selected"}\n;
-        output += Automated Estimated Grade Band: ${auto.band || "N/A"}\n;
-        output += \n============================================================\n\n;
+        let output = `TOK Exhibition Marking - Detailed Export (No Prompt)\n`;
+        output += `Student Name: ${studentName}\n`;
+        output += `IA Prompt Selected: ${iaPrompt}\n`;
+        output += `Teacher's Predicted Grade Band (Manual): ${predictedGradeBandSelect.value || "Not Selected"}\n`;
+        output += `Automated Estimated Grade Band: ${auto.band || "N/A"}\n`;
+        output += `\n============================================================\n\n`;
 
         objectSections.forEach(obj => {
-            output += OBJECT ${obj.id}${obj.nameInput.value.trim() ? : ${obj.nameInput.value.trim()} : ""}\n;
+            output += `OBJECT ${obj.id}${obj.nameInput.value.trim() ? `: ${obj.nameInput.value.trim()}` : ""}\n`;
 
-            const checkedEvalFlag = document.querySelector(input[name="${obj.evalFlagName}"]:checked);
-            output += Object Evaluation: ${checkedEvalFlag ? checkedEvalFlag.value : "Not selected"}\n;
+            const checkedEvalFlag = document.querySelector(`input[name="${obj.evalFlagName}"]:checked`);
+            output += `Object Evaluation: ${checkedEvalFlag ? checkedEvalFlag.value : "Not selected"}\n`;
 
-            output += Rubric Selections for Commentary:\n;
+            output += `Rubric Selections for Commentary:\n`;
             objectRubricKeys.forEach(key => {
-                const checkedRadio = document.querySelector(input[name="${obj.criteriaPrefix}-${key}"]:checked);
+                const checkedRadio = document.querySelector(`input[name="${obj.criteriaPrefix}-${key}"]:checked`);
                 const value = checkedRadio ? checkedRadio.value : "Not selected";
                 let criterionName = key.charAt(0).toUpperCase() + key.slice(1);
                 if (key === "context") criterionName = "Object's Real-World Context";
                 if (key === "links") criterionName = "Links Between Object & IA Prompt";
                 if (key === "justification") criterionName = "Justification for Object Inclusion";
-                output += - ${criterionName}: ${value}\n;
+                output += `- ${criterionName}: ${value}\n`;
             });
 
-            output += \nComments:\n${obj.commentsInput.value.trim() || "No comments."}\n;
-            output += \n------------------------------------------------------------\n\n;
+            output += `\nComments:\n${obj.commentsInput.value.trim() || "No comments."}\n`;
+            output += `\n------------------------------------------------------------\n\n`;
         });
 
-        output += SUMMATIVE ASSESSMENT\n;
+        output += `SUMMATIVE ASSESSMENT\n`;
         const summEvidenceRadio = document.querySelector('input[name="summative-evidence"]:checked');
-        output += Overall Support & Evidence: ${summEvidenceRadio ? summEvidenceRadio.value : "Not selected"}\n;
+        output += `Overall Support & Evidence: ${summEvidenceRadio ? summEvidenceRadio.value : "Not selected"}\n`;
 
         const selectedChars = Array.from(
             document.querySelectorAll('#possible-characteristics-checklist input[type="checkbox"]:checked')
         ).map(cb => cb.value);
 
-        output += Overall Characteristics Selected:\n;
+        output += `Overall Characteristics Selected:\n`;
         if (selectedChars.length > 0) {
-            selectedChars.forEach(c => { output += - ${c}\n; });
+            selectedChars.forEach(c => { output += `- ${c}\n`; });
         } else {
-            output += - None selected\n;
+            output += `- None selected\n`;
         }
 
-        output += \nSummative Comments:\n${summativeCommentsInput.value.trim() || "No summative comments."}\n;
+        output += `\nSummative Comments:\n${summativeCommentsInput.value.trim() || "No summative comments."}\n`;
+
+        // Optionally include the automated reasoning as a final appendix for transparency
+        output += `\n============================================================\n`;
+        output += `AUTOMATED GRADE REASONING (Reference Only)\n`;
+        output += `${auto.reasoning || "N/A"}\n`;
 
         const filenameBase = studentName !== "Not Provided" ? studentName.replace(/\s+/g, '_') : 'TOK_Exhibition';
-        const filename = ${filenameBase}_Detailed_Comments_NoPrompt.txt;
+        const filename = `${filenameBase}_Detailed_Comments_NoPrompt.txt`;
         const blob = new Blob([output], { type: 'text/plain;charset=utf-8' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob); link.download = filename;
@@ -815,52 +830,52 @@ document.addEventListener('DOMContentLoaded', () => {
         let missingFieldsMessages = [];
         if (!studentNameInput.value.trim()) missingFieldsMessages.push("Student Name");
         if (!iaPromptSelect.value) missingFieldsMessages.push("IA Prompt");
-        objectSections.forEach(obj => { if (!obj.commentsInput.value.trim()) missingFieldsMessages.push(Comments for Object ${obj.id}); });
+        objectSections.forEach(obj => { if (!obj.commentsInput.value.trim()) missingFieldsMessages.push(`Comments for Object ${obj.id}`); });
         if (!document.querySelector('input[name="summative-evidence"]:checked')) missingFieldsMessages.push("Overall Support & Evidence (Summative)");
         if (!summativeCommentsInput.value.trim()) missingFieldsMessages.push("Summative Comments");
         if (!predictedGradeBandSelect.value) missingFieldsMessages.push("Predicted Grade Band (Manual)");
         if (document.querySelectorAll('#possible-characteristics-checklist input[type="checkbox"]:checked').length === 0) missingFieldsMessages.push("At least one Overall Characteristic");
-        if (missingFieldsMessages.length > 0) { if (!confirm(It looks like you haven't provided:\n- ${missingFieldsMessages.join("\n- ")}\n\nProceed anyway?)) return; }
+        if (missingFieldsMessages.length > 0) { if (!confirm(`It looks like you haven't provided:\n- ${missingFieldsMessages.join("\n- ")}\n\nProceed anyway?`)) return; }
 
         const studentName = studentNameInput.value.trim();
-        let outputText = IMMEDIATE ACTION REQUIRED:\nYou are to act as a TOK Exhibition Feedback Formatter.\nYour SOLE OUTPUT must be the fully processed and formatted feedback document as detailed below, using Markdown-style formatting for headings, bolding, and lists where appropriate to enhance readability and structure. Ensure clear separation between sections and distinct presentation for each object.\nDO NOT provide any introductory text, summarization, confirmation, or any conversational preamble before generating the feedback document.\nThe very first line of your response MUST be the start of the formatted feedback document (beginning with "**Student Name:** ...").\n\nBegin processing the following TOK Exhibition feedback data according to these strict output requirements and the detailed MANDATORY PROCESSING INSTRUCTIONS that follow:\n\nMANDATORY PROCESSING INSTRUCTIONS:\n;
-        outputText += 1.  **FORMATTING & ORGANIZATION**: Present the feedback clearly. Use Markdown for structure (e.g., '## Section Title', '### Object Title', '**Label:** Value', '* List item').\n    *   Start with:\n        **Student Name:** [Name]\n        **IA Prompt Selected:** [Prompt]\n        \n        ---\n    *   For each object, use a clear heading like '### OBJECT X: [Optional Object Name]'. Under this, include:\n        *   '**Object Evaluation:** [Selected Flag]'\n        *   '**Rubric Selections for Commentary:**' followed by a bulleted list of rubric criteria and the teacher's selection (e.g., '*   Object's Real-World Context: Clearly & specifically identified').\n        *   '**Comments on Object X:**' followed by the teacher's comments. Add a horizontal rule ('---') after each object's full feedback.\n    *   The summative section should have a heading like '## SUMMATIVE ASSESSMENT'. Under this, include:\n        *   '**Overall Support & Evidence for the Exhibition:** [Selected Rubric Value]'\n        *   '**Overall Characteristics Selected by Teacher:**' followed by a bulleted list.\n        *   '**Summative Comments by Teacher:**'\n        *   '**Teacher's Predicted Grade Band:** [Grade Band]'\n    *   Use ample paragraph breaks within longer comments for readability. Strive for a professional, clear, and easy-to-scan document. A horizontal rule ('---') should separate major sections.\n;
-        outputText += 2.  **EDITING & TONE**: Maintain the teacher's authentic voice and style as expressed in their comments. Perform necessary grammar and spelling checks on the teacher's comments and integrate these corrections seamlessly without altering the core meaning or tone.\n;
-        outputText += 3.  **CONCRETE STEPS FOR IMPROVEMENT (CRITICALLY IMPORTANT)**: After presenting all the teacher's feedback (and after a '---' separator), you MUST generate a distinct section titled '## CONCRETE STEPS FOR IMPROVEMENT'. This section must contain 3-5 actionable, bullet-pointed 'to-do' items specifically tailored to the student. These action items should be directly derived from a careful analysis of both the teacher's written comments, their rubric selections (including object commentary rubrics and summative evidence), AND any 'Object Evaluation' flags selected. When generating these steps, give approximately 80% weight to deficiencies clearly indicated by lower rubric selections/negative flags and 20% weight to nuances or specific points raised in the teacher's written comments. Rank these bullet points starting with the most impactful and practical steps the student can take. For each bullet point, briefly explain WHY this improvement is important in the context of a successful TOK exhibition. The advice should be specific and practical.\n;
-        outputText += 4.  **RESOURCES (If Relevant and Adds Value)**: Within the "CONCRETE STEPS FOR IMPROVEMENT" section, IF DIRECTLY RELEVANT to a specific piece of advice and genuinely adds value, you MAY suggest that the student consult general TOK resources. For example: "To further develop your understanding of X, consider exploring resources like TheoryOfKnowledge.net, TOKStudent.com, your school's TOK materials, or the official IB TOK Guide for general guidance on the concepts they need to improve." Use this sparingly and only when it supports a specific point of improvement.\n;
-        outputText += 5.  **NO SUMMARIZATION OF TEACHER'S COMMENTS**: Do NOT summarize the teacher's original comments. The teacher's detailed comments for each object and the summative remarks ARE the core feedback. Your role is to structure this feedback, polish its presentation, and critically, to enhance it with the targeted "CONCRETE STEPS FOR IMPROVEMENT" section.\n\n;
-        outputText += --------------------------------------------------------------------\nBEGIN TOK EXHIBITION FEEDBACK DATA:\n--------------------------------------------------------------------\n\n;
-        outputText += **Student Name:** ${studentName || "Not Provided"}\n;
-        outputText += **IA Prompt Selected:** ${iaPromptSelect.value || "Not Selected"}\n\n---\n\n;
+        let outputText = `IMMEDIATE ACTION REQUIRED:\nYou are to act as a TOK Exhibition Feedback Formatter.\nYour SOLE OUTPUT must be the fully processed and formatted feedback document as detailed below, using Markdown-style formatting for headings, bolding, and lists where appropriate to enhance readability and structure. Ensure clear separation between sections and distinct presentation for each object.\nDO NOT provide any introductory text, summarization, confirmation, or any conversational preamble before generating the feedback document.\nThe very first line of your response MUST be the start of the formatted feedback document (beginning with "**Student Name:** ...").\n\nBegin processing the following TOK Exhibition feedback data according to these strict output requirements and the detailed MANDATORY PROCESSING INSTRUCTIONS that follow:\n\nMANDATORY PROCESSING INSTRUCTIONS:\n`;
+        outputText += `1.  **FORMATTING & ORGANIZATION**: Present the feedback clearly. Use Markdown for structure (e.g., '## Section Title', '### Object Title', '**Label:** Value', '* List item').\n    *   Start with:\n        **Student Name:** [Name]\n        **IA Prompt Selected:** [Prompt]\n        \n        ---\n    *   For each object, use a clear heading like '### OBJECT X: [Optional Object Name]'. Under this, include:\n        *   '**Object Evaluation:** [Selected Flag]'\n        *   '**Rubric Selections for Commentary:**' followed by a bulleted list of rubric criteria and the teacher's selection (e.g., '*   Object's Real-World Context: Clearly & specifically identified').\n        *   '**Comments on Object X:**' followed by the teacher's comments. Add a horizontal rule ('---') after each object's full feedback.\n    *   The summative section should have a heading like '## SUMMATIVE ASSESSMENT'. Under this, include:\n        *   '**Overall Support & Evidence for the Exhibition:** [Selected Rubric Value]'\n        *   '**Overall Characteristics Selected by Teacher:**' followed by a bulleted list.\n        *   '**Summative Comments by Teacher:**'\n        *   '**Teacher's Predicted Grade Band:** [Grade Band]'\n    *   Use ample paragraph breaks within longer comments for readability. Strive for a professional, clear, and easy-to-scan document. A horizontal rule ('---') should separate major sections.\n`;
+        outputText += `2.  **EDITING & TONE**: Maintain the teacher's authentic voice and style as expressed in their comments. Perform necessary grammar and spelling checks on the teacher's comments and integrate these corrections seamlessly without altering the core meaning or tone.\n`;
+        outputText += `3.  **CONCRETE STEPS FOR IMPROVEMENT (CRITICALLY IMPORTANT)**: After presenting all the teacher's feedback (and after a '---' separator), you MUST generate a distinct section titled '## CONCRETE STEPS FOR IMPROVEMENT'. This section must contain 3-5 actionable, bullet-pointed 'to-do' items specifically tailored to the student. These action items should be directly derived from a careful analysis of both the teacher's written comments, their rubric selections (including object commentary rubrics and summative evidence), AND any 'Object Evaluation' flags selected. When generating these steps, give approximately 80% weight to deficiencies clearly indicated by lower rubric selections/negative flags and 20% weight to nuances or specific points raised in the teacher's written comments. Rank these bullet points starting with the most impactful and practical steps the student can take. For each bullet point, briefly explain WHY this improvement is important in the context of a successful TOK exhibition. The advice should be specific and practical.\n`;
+        outputText += `4.  **RESOURCES (If Relevant and Adds Value)**: Within the "CONCRETE STEPS FOR IMPROVEMENT" section, IF DIRECTLY RELEVANT to a specific piece of advice and genuinely adds value, you MAY suggest that the student consult general TOK resources. For example: "To further develop your understanding of X, consider exploring resources like TheoryOfKnowledge.net, TOKStudent.com, your school's TOK materials, or the official IB TOK Guide for general guidance on the concepts they need to improve." Use this sparingly and only when it supports a specific point of improvement.\n`;
+        outputText += `5.  **NO SUMMARIZATION OF TEACHER'S COMMENTS**: Do NOT summarize the teacher's original comments. The teacher's detailed comments for each object and the summative remarks ARE the core feedback. Your role is to structure this feedback, polish its presentation, and critically, to enhance it with the targeted "CONCRETE STEPS FOR IMPROVEMENT" section.\n\n`;
+        outputText += `--------------------------------------------------------------------\nBEGIN TOK EXHIBITION FEEDBACK DATA:\n--------------------------------------------------------------------\n\n`;
+        outputText += `**Student Name:** ${studentName || "Not Provided"}\n`;
+        outputText += `**IA Prompt Selected:** ${iaPromptSelect.value || "Not Selected"}\n\n---\n\n`;
         objectSections.forEach(obj => {
-            outputText += ### OBJECT ${obj.id}${obj.nameInput.value ? : ${obj.nameInput.value.trim()} : ''}\n;
-            const checkedEvalFlag = document.querySelector(input[name="${obj.evalFlagName}"]:checked);
-            outputText += **Object Evaluation:** ${checkedEvalFlag ? checkedEvalFlag.value : "No evaluation selected"}\n; // Changed from "No specific..."
-            outputText += **Rubric Selections for Commentary:**\n;
+            outputText += `### OBJECT ${obj.id}${obj.nameInput.value ? `: ${obj.nameInput.value.trim()}` : ''}\n`;
+            const checkedEvalFlag = document.querySelector(`input[name="${obj.evalFlagName}"]:checked`);
+            outputText += `**Object Evaluation:** ${checkedEvalFlag ? checkedEvalFlag.value : "No evaluation selected"}\n`; // Changed from "No specific..."
+            outputText += `**Rubric Selections for Commentary:**\n`;
             objectRubricKeys.forEach(key => {
-                const checkedRadio = document.querySelector(input[name="${obj.criteriaPrefix}-${key}"]:checked);
+                const checkedRadio = document.querySelector(`input[name="${obj.criteriaPrefix}-${key}"]:checked`);
                 const value = checkedRadio ? checkedRadio.value : "Not selected";
                 let criterionName = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim();
                 if (key === "context") criterionName = "Object's Real-World Context";
                 if (key === "links") criterionName = "Links Between Object & IA Prompt";
                 if (key === "justification") criterionName = "Justification for Object Inclusion";
-                outputText += *   ${criterionName}: ${value}\n;
+                outputText += `*   ${criterionName}: ${value}\n`;
             });
-            outputText += **Comments on Object ${obj.id}:**\n${obj.commentsInput.value.trim() || "No specific comments provided."}\n\n---\n\n;
+            outputText += `**Comments on Object ${obj.id}:**\n${obj.commentsInput.value.trim() || "No specific comments provided."}\n\n---\n\n`;
         });
-        outputText += ## SUMMATIVE ASSESSMENT\n;
+        outputText += `## SUMMATIVE ASSESSMENT\n`;
         const summEvidenceRadio = document.querySelector('input[name="summative-evidence"]:checked');
         const summEvidenceValue = summEvidenceRadio ? summEvidenceRadio.value : "Not selected";
-        outputText += **Overall Support & Evidence for the Exhibition:** ${summEvidenceValue}\n;
+        outputText += `**Overall Support & Evidence for the Exhibition:** ${summEvidenceValue}\n`;
         const selectedChars = Array.from(document.querySelectorAll('#possible-characteristics-checklist input[type="checkbox"]:checked')).map(cb => cb.value);
-        outputText += **Overall Characteristics Selected by Teacher:**\n${selectedChars.length > 0 ? selectedChars.map(c => * ${c}).join('\n') : "* None selected"}\n;
-        outputText += **Summative Comments by Teacher:**\n${summativeCommentsInput.value.trim() || "No summative comments provided."}\n\n;
-        outputText += **Teacher's Predicted Grade Band:** ${predictedGradeBandSelect.value || "Not selected"}\n\n---\n\n;
-        outputText += --------------------------------------------------------------------\nEND OF TOK EXHIBITION FEEDBACK DATA.\n--------------------------------------------------------------------\n;
-        outputText += REMINDER: Your response should ONLY be the formatted feedback document itself, starting directly with "**Student Name:** ...". Adhere strictly to all instructions, especially the Markdown formatting guidelines for a professional and readable output.\nNow, please generate the complete, formatted feedback document for the student, ensuring you include the "## CONCRETE STEPS FOR IMPROVEMENT" section as specified in the MANDATORY PROCESSING INSTRUCTIONS above.\n;
+        outputText += `**Overall Characteristics Selected by Teacher:**\n${selectedChars.length > 0 ? selectedChars.map(c => `* ${c}`).join('\n') : "* None selected"}\n`;
+        outputText += `**Summative Comments by Teacher:**\n${summativeCommentsInput.value.trim() || "No summative comments provided."}\n\n`;
+        outputText += `**Teacher's Predicted Grade Band:** ${predictedGradeBandSelect.value || "Not selected"}\n\n---\n\n`;
+        outputText += `--------------------------------------------------------------------\nEND OF TOK EXHIBITION FEEDBACK DATA.\n--------------------------------------------------------------------\n`;
+        outputText += `REMINDER: Your response should ONLY be the formatted feedback document itself, starting directly with "**Student Name:** ...". Adhere strictly to all instructions, especially the Markdown formatting guidelines for a professional and readable output.\nNow, please generate the complete, formatted feedback document for the student, ensuring you include the "## CONCRETE STEPS FOR IMPROVEMENT" section as specified in the MANDATORY PROCESSING INSTRUCTIONS above.\n`;
 
         const filenameBase = studentName ? studentName.replace(/\s+/g, '_') : 'TOK_Exhibition';
-        const filename = ${filenameBase}_Feedback_for_ChatGPT.txt;
+        const filename = `${filenameBase}_Feedback_for_ChatGPT.txt`;
         const blob = new Blob([outputText], { type: 'text/plain;charset=utf-8' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob); link.download = filename;
