@@ -432,9 +432,7 @@ button:active { transform: translateY(1px); }
 
         <section id="actions-section" class="input-section">
             <h2>Actions</h2>
-            <!-- Commented out this button for student use -->
-            <!-- <button id="generate-feedback-btn">Generate Feedback File (for ChatGPT)</button>-->
-            <button id="export-comments-btn">Export Comments Only (.txt)</button>
+                        <button id="export-comments-btn">Export Grading and Comments (.txt)</button>
             <button id="reset-form-btn">Reset Form</button>
         </section>
 
@@ -761,26 +759,66 @@ document.addEventListener('DOMContentLoaded', () => {
     resetFormBtn.addEventListener('click', () => resetForm(true));
 
     function generateRawCommentsOutput() {
-        const studentName = studentNameInput.value.trim() || "N/A";
-        let rawOutput = `TOK Exhibition Comments\n`;
-        rawOutput += `Student Name: ${studentName}\n`;
-        rawOutput += `IA Prompt: ${iaPromptSelect.value || "Not Selected"}\n\n`;
+        const studentName = studentNameInput.value.trim() || "Not Provided";
+        const iaPrompt = iaPromptSelect.value || "Not Selected";
+
+        // Include automated estimate for convenience (still teacher-facing; not a replacement for manual band)
+        const auto = calculateAutomatedGrade();
+
+        let output = `TOK Exhibition Marking - Detailed Export (No Prompt)\n`;
+        output += `Student Name: ${studentName}\n`;
+        output += `IA Prompt Selected: ${iaPrompt}\n`;
+        output += `Teacher's Predicted Grade Band (Manual): ${predictedGradeBandSelect.value || "Not Selected"}\n`;
+        output += `Automated Estimated Grade Band: ${auto.band || "N/A"}\n`;
+        output += `\n============================================================\n\n`;
+
         objectSections.forEach(obj => {
-            rawOutput += `--- Object ${obj.id} ${obj.nameInput.value ? `(${obj.nameInput.value.trim()})` : ''} ---\n`;
+            output += `OBJECT ${obj.id}${obj.nameInput.value.trim() ? `: ${obj.nameInput.value.trim()}` : ""}\n`;
+
             const checkedEvalFlag = document.querySelector(`input[name="${obj.evalFlagName}"]:checked`);
-            if(checkedEvalFlag) rawOutput += `Object Evaluation: ${checkedEvalFlag.value}\n`;
-            rawOutput += `Comments:\n${obj.commentsInput.value.trim() || "No comments."}\n\n`;
+            output += `Object Evaluation: ${checkedEvalFlag ? checkedEvalFlag.value : "Not selected"}\n`;
+
+            output += `Rubric Selections for Commentary:\n`;
+            objectRubricKeys.forEach(key => {
+                const checkedRadio = document.querySelector(`input[name="${obj.criteriaPrefix}-${key}"]:checked`);
+                const value = checkedRadio ? checkedRadio.value : "Not selected";
+                let criterionName = key.charAt(0).toUpperCase() + key.slice(1);
+                if (key === "context") criterionName = "Object's Real-World Context";
+                if (key === "links") criterionName = "Links Between Object & IA Prompt";
+                if (key === "justification") criterionName = "Justification for Object Inclusion";
+                output += `- ${criterionName}: ${value}\n`;
+            });
+
+            output += `\nComments:\n${obj.commentsInput.value.trim() || "No comments."}\n`;
+            output += `\n------------------------------------------------------------\n\n`;
         });
-        rawOutput += `--- Summative Comments ---\n${summativeCommentsInput.value.trim() || "No summative comments."}\n`;
-        
-        const filenameBase = studentName !== "N/A" ? studentName.replace(/\s+/g, '_') : 'TOK_Exhibition';
-        const filename = `${filenameBase}_Raw_Comments.txt`;
-        const blob = new Blob([rawOutput], { type: 'text/plain;charset=utf-8' });
+
+        output += `SUMMATIVE ASSESSMENT\n`;
+        const summEvidenceRadio = document.querySelector('input[name="summative-evidence"]:checked');
+        output += `Overall Support & Evidence: ${summEvidenceRadio ? summEvidenceRadio.value : "Not selected"}\n`;
+
+        const selectedChars = Array.from(
+            document.querySelectorAll('#possible-characteristics-checklist input[type="checkbox"]:checked')
+        ).map(cb => cb.value);
+
+        output += `Overall Characteristics Selected:\n`;
+        if (selectedChars.length > 0) {
+            selectedChars.forEach(c => { output += `- ${c}\n`; });
+        } else {
+            output += `- None selected\n`;
+        }
+
+        output += `\nSummative Comments:\n${summativeCommentsInput.value.trim() || "No summative comments."}\n`;
+
+        const filenameBase = studentName !== "Not Provided" ? studentName.replace(/\s+/g, '_') : 'TOK_Exhibition';
+        const filename = `${filenameBase}_Detailed_Comments_NoPrompt.txt`;
+        const blob = new Blob([output], { type: 'text/plain;charset=utf-8' });
         const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob); link.download = filename;
+        link.href = URL.createObjectURL(blob); link.download c= filename;
         document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(link.href);
     }
     if(exportCommentsBtn) exportCommentsBtn.addEventListener('click', generateRawCommentsOutput);
+
 
 
     function generateFeedbackForChatGPT() {
